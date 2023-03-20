@@ -34,12 +34,12 @@ export default class {
       .list()
       .then(snapshot => {
         const bills = snapshot
-          .map(doc => {
-            try {
-              return {
-                ...doc,
-                date: formatDate(doc.date),
-                status: formatStatus(doc.status)
+        .map(doc => {
+          try {
+            return {
+              ...doc,
+              date: formatDate(doc.date),
+              status: formatStatus(doc.status)
               }
             } catch(e) {
               // if for some reason, corrupted data was introduced, we manage here failing formatDate function
@@ -52,6 +52,7 @@ export default class {
               }
             }
           })
+          .sort((a, b) => new Date(b.date) - new Date(a.date)); // Tri par ordre décroissant de date
           console.log('length', bills.length)
         return bills
       })
