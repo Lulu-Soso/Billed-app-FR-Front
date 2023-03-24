@@ -1,3 +1,4 @@
+// Importation des modules et des constantes nécessaires
 import { formatDate } from '../app/format.js'
 import DashboardFormUI from '../views/DashboardFormUI.js'
 import BigBilledIcon from '../assets/svg/big_billed.js'
@@ -5,6 +6,7 @@ import { ROUTES_PATH } from '../constants/routes.js'
 import USERS_TEST from '../constants/usersTest.js'
 import Logout from "./Logout.js"
 
+// Fonction pour filtrer les factures en fonction du statut donné
 export const filteredBills = (data, status) => {
   return (data && data.length) ?
     data.filter(bill => {
@@ -27,6 +29,7 @@ export const filteredBills = (data, status) => {
     }) : []
 }
 
+// Fonction pour créer une carte HTML avec les informations de la facture
 export const card = (bill) => {
   const firstAndLastNames = bill.email.split('@')[0]
   const firstName = firstAndLastNames.includes('.') ?
@@ -52,10 +55,12 @@ export const card = (bill) => {
   `)
 }
 
+// Fonction pour créer des cartes HTML pour chaque facture dans le tableau de factures
 export const cards = (bills) => {
   return bills && bills.length ? bills.map(bill => card(bill)).join("") : ""
 }
 
+// Fonction pour obtenir le statut en fonction de l'index
 export const getStatus = (index) => {
   switch (index) {
     case 1:
@@ -67,17 +72,21 @@ export const getStatus = (index) => {
   }
 }
 
+// Classe principale pour gérer les événements et l'interaction avec le DOM
 export default class {
   constructor({ document, onNavigate, store, bills, localStorage }) {
     this.document = document
     this.onNavigate = onNavigate
     this.store = store
+    // Gestion des événements de clic pour les flèches
     $('#arrow-icon1').click((e) => this.handleShowTickets(e, bills, 1))
     $('#arrow-icon2').click((e) => this.handleShowTickets(e, bills, 2))
     $('#arrow-icon3').click((e) => this.handleShowTickets(e, bills, 3))
+    // Initialisation du module de déconnexion
     new Logout({ localStorage, onNavigate })
   }
 
+  // Méthode pour gérer l'affichage de l'image de la facture dans une modale
   handleClickIconEye = () => {
     const billUrl = $('#icon-eye-d').attr("data-bill-url")
     const imgWidth = Math.floor($('#modaleFileAdmin1').width() * 0.8)
@@ -85,6 +94,7 @@ export default class {
     if (typeof $('#modaleFileAdmin1').modal === 'function') $('#modaleFileAdmin1').modal('show')
   }
 
+  // Méthode pour gérer l'événement de clic sur une facture et afficher le formulaire de modification
   handleEditTicket(e, bill, bills) {
     if (this.counter === undefined || this.id !== bill.id) this.counter = 0
     if (this.id === undefined || this.id !== bill.id) this.id = bill.id
@@ -110,6 +120,7 @@ export default class {
     $('#btn-refuse-bill').click((e) => this.handleRefuseSubmit(e, bill))
   }
 
+  // Méthode pour gérer la soumission du formulaire d'acceptation d'une facture
   handleAcceptSubmit = (e, bill) => {
     const newBill = {
       ...bill,
@@ -120,6 +131,7 @@ export default class {
     this.onNavigate(ROUTES_PATH['Dashboard'])
   }
 
+  // Méthode pour gérer la soumission du formulaire de refus d'une facture
   handleRefuseSubmit = (e, bill) => {
     const newBill = {
       ...bill,
@@ -130,29 +142,53 @@ export default class {
     this.onNavigate(ROUTES_PATH['Dashboard'])
   }
 
+  // Méthode pour afficher les factures en fonction de leur statut
+  // handleShowTickets(e, bills, index) {
+  //   if (this.counter === undefined || this.index !== index) this.counter = 0
+  //   if (this.index === undefined || this.index !== index) this.index = index
+  //   if (this.counter % 2 === 0) {
+  //     $(`#arrow-icon${this.index}`).css({ transform: 'rotate(0deg)'})
+  //     $(`#status-bills-container${this.index}`)
+  //       .html(cards(filteredBills(bills, getStatus(this.index))))
+  //     this.counter ++
+  //   } else {
+  //     $(`#arrow-icon${this.index}`).css({ transform: 'rotate(90deg)'})
+  //     $(`#status-bills-container${this.index}`)
+  //       .html("")
+  //     this.counter ++
+  //   }
+
+  //   bills.forEach(bill => {
+  //     $(`#open-bill${bill.id}`).click((e) => this.handleEditTicket(e, bill, bills))
+  //   })
+
+  //   return bills
+  // }
+
   handleShowTickets(e, bills, index) {
-    if (this.counter === undefined || this.index !== index) this.counter = 0
-    if (this.index === undefined || this.index !== index) this.index = index
-    if (this.counter % 2 === 0) {
-      $(`#arrow-icon${this.index}`).css({ transform: 'rotate(0deg)'})
-      $(`#status-bills-container${this.index}`)
-        .html(cards(filteredBills(bills, getStatus(this.index))))
-      this.counter ++
+    if (!this.expandedLists) this.expandedLists = {}
+  
+    if (!this.expandedLists[index]) {
+      $(`#arrow-icon${index}`).css({ transform: 'rotate(0deg)' })
+      $(`#status-bills-container${index}`)
+        .html(cards(filteredBills(bills, getStatus(index))))
+      this.expandedLists[index] = true
     } else {
-      $(`#arrow-icon${this.index}`).css({ transform: 'rotate(90deg)'})
-      $(`#status-bills-container${this.index}`)
+      $(`#arrow-icon${index}`).css({ transform: 'rotate(90deg)' })
+      $(`#status-bills-container${index}`)
         .html("")
-      this.counter ++
+      this.expandedLists[index] = false
     }
-
+  
     bills.forEach(bill => {
-      $(`#open-bill${bill.id}`).click((e) => this.handleEditTicket(e, bill, bills))
+      $(`#open-bill${bill.id}`).off('click')
+      $(`#open-bill${bill.id}`).on('click', (e) => this.handleEditTicket(e, bill, bills))
     })
-
+  
     return bills
-
   }
 
+  // Méthode pour récupérer toutes les factures de tous les utilisateurs à partir du store
   getBillsAllUsers = () => {
     if (this.store) {
       return this.store
@@ -176,6 +212,7 @@ export default class {
 
   // not need to cover this function by tests
   /* istanbul ignore next */
+   // Méthode pour mettre à jour une facture dans le store avec les nouvelles informations
   updateBill = (bill) => {
     if (this.store) {
     return this.store
